@@ -1,11 +1,11 @@
 package plg_image_golang
 
 import (
-	"github.com/h2non/bimg"
-	. "github.com/mickael-kerjean/filestash/server/common"
 	"io"
-	"io/ioutil"
 	"net/http"
+
+	"github.com/davidbyttow/govips/v2/vips"
+	. "github.com/mickael-kerjean/filestash/server/common"
 )
 
 const THUMB_SIZE int = 150
@@ -28,13 +28,17 @@ func (this thumbnailer) Generate(reader io.ReadCloser, ctx *App, res *http.Respo
 		return reader, nil
 	}
 
-	b, err := ioutil.ReadAll(reader)
+	newImage, err := vips.NewImageFromReader(reader)
 	if err != nil {
 		return reader, err
 	}
-	newImage, err := bimg.NewImage(b).Thumbnail(THUMB_SIZE)
+	err = newImage.Thumbnail(300, 300, vips.InterestingAll)
 	if err != nil {
 		return reader, err
 	}
-	return NewReadCloserFromBytes(newImage), err
+	param := vips.NewJpegExportParams()
+	param.Quality = 85
+	data, _, err := newImage.ExportJpeg(param)
+
+	return NewReadCloserFromBytes(data), err
 }

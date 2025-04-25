@@ -2,18 +2,19 @@ package plg_image_golang
 
 import (
 	"bytes"
-	. "github.com/mickael-kerjean/filestash/server/common"
-	"golang.org/x/image/draw"
 	"image"
 	_ "image/gif"
-	_ "image/jpeg"
-	"image/png"
+	"image/jpeg"
+	_ "image/png"
+
+	. "github.com/mickael-kerjean/filestash/server/common"
+	"golang.org/x/image/draw"
 
 	"io"
 	"net/http"
 )
 
-const THUMB_SIZE int = 150
+const THUMB_SIZE int = 300
 
 func init() {
 	Hooks.Register.Thumbnailer("image/jpeg", thumbnailer{})
@@ -53,7 +54,7 @@ func (this thumbnailer) Generate(reader io.ReadCloser, ctx *App, res *http.Respo
 	dst := image.NewRGBA(image.Rect(0, 0, src.Bounds().Max.X/ratio, src.Bounds().Max.Y/ratio))
 	draw.ApproxBiLinear.Scale(dst, dst.Rect, src, src.Bounds(), draw.Over, nil)
 	output := bytes.NewBuffer([]byte(""))
-	if err = png.Encode(output, dst); err != nil {
+	if err = jpeg.Encode(output, dst, &jpeg.Options{Quality: 85}); err != nil {
 		return reader, err
 	}
 	return NewReadCloserFromBytes(output.Bytes()), nil
